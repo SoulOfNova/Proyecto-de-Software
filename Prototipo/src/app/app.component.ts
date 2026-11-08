@@ -6,12 +6,13 @@ import { createWorker } from 'tesseract.js';
 import * as pdfjsLib from 'pdfjs-dist';
 
 import { OcrParserService, DatosPensionado } from './ocr-parser.service';
+import { DragDropDirective } from './directives/drag-drop.directive';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommonModule, MatProgressBarModule],
+  imports: [RouterOutlet, CommonModule, MatProgressBarModule, DragDropDirective],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -28,11 +29,18 @@ export class AppComponent {
   datosJson: DatosPensionado | null = null;
   tabActiva: 'texto' | 'json' = 'texto';
 
+  async onFileDropped(files: FileList): Promise<void> {
+    if (!files || files.length === 0) return;
+    await this.procesarArchivo(files[0]);
+  }
+
   async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
+    await this.procesarArchivo(input.files[0]);
+  }
 
-    const archivo = input.files[0];
+  private async procesarArchivo(archivo: File): Promise<void> {
     this.archivoSeleccionado = archivo;
     this.textoExtraido = '';
     this.confianza = 0;

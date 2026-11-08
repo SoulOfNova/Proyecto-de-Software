@@ -26,8 +26,13 @@ export class OcrParserService {
 
     let texto = monto.trim();
 
-    texto = texto.replace(/[\.,]00$/, '');
+    // Normalizar comas a puntos si vienen como separadores decimales
+    texto = texto.replace(/,(\d{2})$/, '.$1');
 
+    // Quitar centavos .00 si existen al final
+    texto = texto.replace(/\.00$/, '');
+
+    // Extraer únicamente los dígitos numéricos
     const digitos = texto.replace(/\D/g, '');
     const numero = parseInt(digitos, 10);
     
@@ -36,7 +41,8 @@ export class OcrParserService {
 
   public procesarTextoDocumento(texto: string): DatosPensionado {
     const matchPension = texto.match(/(?:VALOR\s*PENSION|TOTAL DEVENGADOS)[^\d]*([\d\.,\s]+)/i);
-    const matchSalud = texto.match(/SALUD[^\$]*\$?\s*([\d\.,\s]+)/i);
+    // Regex mejorada para Salud capturando únicamente los dígitos numéricos con formato
+    const matchSalud = texto.match(/SALUD[^\$]*\$?\s*([\d\.,\s]+?)(?=\r|\n|\s+[A-Z]|$)/i);
     const matchDeducidos = texto.match(/TOTAL DEDUCIDOS[^\d]*([\d\.,\s]+)/i);
     const matchNeto = texto.match(/NETO GIRADO[^\d]*([\d\.,\s]+)/i);
 
@@ -93,9 +99,15 @@ export class OcrParserService {
     }
 
     let capacidadBaseLey1527: number | null = null;
-    if (valorPension !== null && salud !== null && totalDeducidos !== null) {
-      const baseMedioSalario = Math.floor((valorPension - salud) / 2);
-      const resultadoCalculo = baseMedioSalario - totalDeducidos + salud;
+    
+    if (valorPension !== null && totalDeducidos !== null) {
+      const valorSalud = salud || 0;
+      
+      const baseIngresoNeto = valorPension - valorSalud;
+      const capacidadMaximaLegal = Math.floor(baseIngresoNeto / 2);
+      const descuentosLibranzasActuales = totalDeducidos - valorSalud;
+      
+      const resultadoCalculo = capacidadMaximaLegal - descuentosLibranzasActuales;
       capacidadBaseLey1527 = resultadoCalculo > 0 ? resultadoCalculo : 0;
     }
 

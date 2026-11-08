@@ -11,7 +11,12 @@
 
   <section class="left-container">
 
-    <label for="file" class="drop-zone">
+    <label 
+      for="file" 
+      class="drop-zone"
+      appDragDrop
+      (fileDropped)="onFileDropped($event)">
+      
       @if (!archivoSeleccionado) {
         <span class="drop-label">Adjunta o arrastra el documento (Imagen o PDF):</span>
       } @else {
