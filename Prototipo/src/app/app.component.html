@@ -1,0 +1,124 @@
+<header class="top-bar">
+  <div class="brand">
+    <h1>Coop Belén - Proyecto OCR</h1>
+  </div>
+  <div class="status">
+    <span>Estado API: Online</span>
+  </div>
+</header>
+
+<main class="main">
+
+  <section class="left-container">
+
+    <label for="file" class="drop-zone">
+      @if (!archivoSeleccionado) {
+        <span class="drop-label">Adjunta o arrastra el documento (Imagen o PDF):</span>
+      } @else {
+        <div class="file-details">
+          <span class="file-icon">📄</span>
+          <span class="file-name">{{ archivoSeleccionado.name }}</span>
+          <span class="file-size">({{ (archivoSeleccionado.size / 1024).toFixed(1) }} KB)</span>
+        </div>
+      }
+
+      <input 
+        type="file" 
+        id="file" 
+        name="file" 
+        accept="image/*, application/pdf"
+        (change)="onFileSelected($event)">
+
+    </label>
+
+    <div class="progress">
+      @if (uploadProgress !== null) {
+        <mat-progress-bar 
+          class="progress-bar" 
+          mode="determinate" 
+          [value]="uploadProgress">
+        </mat-progress-bar>
+      }
+    </div>
+
+    @if (archivoSeleccionado) {
+      <button type="button" class="btn-quitar" (click)="quitarArchivo()">
+        Cambiar archivo
+      </button>
+    }
+
+  </section>
+
+  <section class="right-container">
+    <h2>Resultados</h2>
+
+    <nav class="tabs-nav">
+      <button 
+        type="button" 
+        class="tab-btn" 
+        [class.active]="tabActiva === 'texto'"
+        (click)="tabActiva = 'texto'">
+        Texto Plano
+      </button>
+
+      <button 
+        type="button" 
+        class="tab-btn" 
+        [class.active]="tabActiva === 'json'"
+        (click)="tabActiva = 'json'">
+        Datos (JSON)
+      </button>
+    </nav>
+
+    <article class="ocr-result">
+      <div class="score-badge">
+        <strong>Confianza de lectura:</strong> 
+        {{ confianza > 0 ? confianza + '%' : '--%' }}
+      </div>
+
+      @if (tabActiva === 'texto') {
+        <pre class="extracted-text">{{ textoExtraido || 'Aquí se mostrará el texto extraído del archivo.' }}</pre>
+      }
+      
+      @if (tabActiva === 'json' && datosJson) {
+      <div class="json-container">
+        <pre class="extracted-text">{{ datosJson | json }}</pre>
+
+        <div class="tabla-compras">
+          <h3>Desglose de Compra de Cartera</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Entidad / Concepto</th>
+                <th>Cuota a Liberar</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of datosJson.comprasCartera; track item.entidad) {
+                <tr>
+                  <td>{{ item.entidad }}</td>
+                  <td>${{ item.valorCuota | number }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="2">No se detectaron préstamos para compra de cartera.</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <th>Total Cuotas Liberadas:</th>
+                <th>${{ datosJson.totalCuotasLiberadas | number }}</th>
+              </tr>
+              <tr class="highlight-row">
+                <th>Capacidad Final Consolidada:</th>
+                <th>${{ datosJson.capacidadTotalConCompra | number }}</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    }
+    </article>
+  </section>
+</main>
